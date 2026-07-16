@@ -12,7 +12,7 @@ def init_db():
             id INTEGER PRIMARY KEY,
             source TEXT,
             difficulty INTEGER,
-            statement TEXT,
+            statement TEXT UNIQUE,
             image_path TEXT,
             options TEXT,
             answer TEXT
