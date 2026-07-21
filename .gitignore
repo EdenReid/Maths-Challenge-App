@@ -4,3 +4,4 @@ __pycache__/
 problems.db
 .DS_Store
 scratch.py
+test_output.png

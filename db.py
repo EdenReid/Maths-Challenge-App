@@ -17,6 +17,7 @@ def init_db():
             image_path TEXT,
             options TEXT,
             answer TEXT
+            statement_image TEXT
         )
     """)
     conn.execute("""

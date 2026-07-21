@@ -4,15 +4,18 @@ import db
 
 def main(page:ft.Page):
     page.title = "Problem Set"
+    page.window.width = 390
+    page.window.height = 844
 
     statement_text = ft.Text(size=20)
     result_text = ft.Text(size=15)
     options_column = ft.Column()
+    statement_image = ft.Image(src="", width = 600, fit = ft.BoxFit.CONTAIN)
 
     current_problem = None 
 
     def load_new_problem():
-        nonlocal current_problem
+        nonlocal current_problem, statement_image
         current_problem = db.get_random_unsolved_problem()
         result_text.value = ""
 
@@ -22,7 +25,7 @@ def main(page:ft.Page):
             page.update()
             return
 
-        statement_text.value = current_problem["statement"]
+        statement_image.src = current_problem["statement_image"]
         options = json.loads(current_problem["options"])
 
         buttons = []
@@ -50,7 +53,7 @@ def main(page:ft.Page):
     
     next_button = ft.ElevatedButton("Next problem", on_click=lambda e: load_new_problem())
 
-    page.add(statement_text, options_column, result_text, next_button)
+    page.add(statement_text, statement_image, options_column, result_text, next_button)
 
     load_new_problem()
 

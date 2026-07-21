@@ -1,5 +1,6 @@
 import sqlite3
 conn = sqlite3.connect("problems.db")
-conn.execute("ALTER TABLE problem_progress ADD COLUMN first_attempt_correct BOOLEAN DEFAULT NULL")
+conn.execute("ALTER TABLE problems DROP COLUMN statement_image")
+conn.execute("ALTER TABLE problems ADD statement_image TEXT")
 conn.commit()
 conn.close()
