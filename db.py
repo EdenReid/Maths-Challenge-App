@@ -16,7 +16,7 @@ def init_db():
             statement TEXT UNIQUE,
             image_path TEXT,
             options TEXT,
-            answer TEXT
+            answer TEXT,
             statement_image TEXT
         )
     """)
@@ -25,7 +25,7 @@ def init_db():
             problem_id INTEGER PRIMARY KEY,
             solved BOOLEAN DEFAULT 0,
             attempts INTEGER DEFAULT 0,
-            first_attempt_correct BOOLEAN DEFAULT NULL
+            first_attempt_correct BOOLEAN DEFAULT NULL,
             FOREIGN KEY(problem_id) REFERENCES problems(id)
         )
     """)

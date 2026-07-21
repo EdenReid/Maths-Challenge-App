@@ -30,14 +30,28 @@ def import_questions(json_path):
             WHERE id = ?
         """, (statement_image_path, problem_id,)
         )
+
+        options = q["options"]
+        if options is not None:
+            for opt in options:
+                if opt["type"] == "text":
+                    opt_image_path = os.path.join("images",f"q{problem_id}_opt{opt['id']}.png")
+                    if not os.path.exists(opt_image_path):
+                        render_text_to_image(opt["value"], opt_image_path, fontsize=16, wrap_width_in=2)
+                    opt["image_path"] = opt_image_path
+            conn.execute("UPDATE problems SET options = ? WHERE id = ?", (json.dumps(options), problem_id))
+        
         conn.execute("""
             INSERT OR IGNORE INTO problem_progress (problem_id, solved, attempts) VALUES (?,0,0)
         """, (problem_id,))
+
     conn.commit()
     conn.close()
 
-def render_text_to_image(text, output_path, fontsize=16, wrap_width_in=5):
+def render_text_to_image(text, output_path, fontsize=28, wrap_width_in=5):
     text = text.replace(r"\(","$").replace(r"\)","$")
+    if "$" not in text:
+        text = f"${text}$"
     wrapped = r"\parbox{" + f"{wrap_width_in}in" + "}{" + text + "}"
     fig = plt.figure(figsize=(wrap_width_in + 0.5, 3))
     fig.text(0, 1, wrapped, fontsize = fontsize, ha="left", va="top", wrap=True, color="white")

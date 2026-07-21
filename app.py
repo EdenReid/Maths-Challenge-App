@@ -31,13 +31,23 @@ def main(page:ft.Page):
         buttons = []
 
         for opt in options:
-            label = opt["value"] if opt["type"] == "text" else f"[Image: {opt["value"]}]"
+            if opt["type"] == "text":
+                button_content = ft.Row([
+                    ft.Text(f"{opt['id']}:", color=ft.Colors.WHITE),
+                    ft.Image(src=opt["image_path"], width=120, height=45, fit=ft.BoxFit.CONTAIN)
+                ])
+            else:
+                button_content = ft.Row([
+                    ft.Text(f"{opt['id']}:", color=ft.Colors.WHITE),
+                    ft.Image(src=opt["value"], width=120, height=45, fit=ft.BoxFit.CONTAIN)
+                ])
             buttons.append(
                 ft.ElevatedButton(
-                    f"{opt['id']}: {label}",
-                    on_click=lambda e, opt_id=opt["id"]: check_answer(opt_id)
+                    content=button_content,
+                    on_click = lambda e, opt_id=opt["id"]: check_answer(opt_id)
                 )
             )
+
         options_column.controls = buttons
         page.update()
 
