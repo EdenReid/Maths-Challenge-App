@@ -28,13 +28,13 @@ def main(page:ft.Page):
         statement_image.src = current_problem["statement_image"]
         options = json.loads(current_problem["options"])
 
-        buttons = []
+        buttons = [statement_image]
 
         for opt in options:
             if opt["type"] == "text":
                 button_content = ft.Row([
                     ft.Text(f"{opt['id']}:", color=ft.Colors.WHITE),
-                    ft.Image(src=opt["image_path"], width=120, height=45, fit=ft.BoxFit.CONTAIN)
+                    ft.Image(src=opt["image_path"], height=45, fit=ft.BoxFit.CONTAIN)
                 ])
             else:
                 button_content = ft.Row([
@@ -62,8 +62,11 @@ def main(page:ft.Page):
         page.update()
     
     next_button = ft.ElevatedButton("Next problem", on_click=lambda e: load_new_problem())
-
-    page.add(statement_text, statement_image, options_column, result_text, next_button)
+    # page.add(
+    # ft.Image(src="images/q2_optA.png", width=200, height=80, fit=ft.BoxFit.CONTAIN),
+    # statement_text, statement_image, options_column, result_text, next_button
+    # )
+    page.add(statement_text, options_column, result_text, next_button)
 
     load_new_problem()
 
