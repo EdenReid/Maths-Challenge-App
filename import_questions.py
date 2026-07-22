@@ -1,12 +1,12 @@
 import json 
 import matplotlib.pyplot as plt
 import matplotlib
+from PIL import Image
 matplotlib.use("Agg")
 matplotlib.rcParams["text.usetex"] = True
 matplotlib.rcParams["text.latex.preamble"] = r"\usepackage{amsmath}"
 from db import get_connection
 import os 
-
 os.makedirs("images", exist_ok=True)
 
 def import_questions(json_path):
@@ -58,8 +58,9 @@ def render_text_to_image(text, output_path, fontsize=28, wrap_width_in=5):
     plt.axis("off")
     plt.savefig(output_path, bbox_inches="tight", dpi=200, pad_inches=0.15, transparent=True)
     plt.close(fig)
+    crop_to_content(output_path)
 
-def render_option_image(text, output_path, fontsize=28):
+def render_option_image(text, output_path, fontsize=25):
     text = text.replace(r"\(","$").replace(r"\)","$")
     if "$" not in text:
         text = f"${text}$"
@@ -68,6 +69,15 @@ def render_option_image(text, output_path, fontsize=28):
     plt.axis("off")
     plt.savefig(output_path, bbox_inches="tight", dpi=200, pad_inches=0.15, transparent=True)
     plt.close(fig)
+
+def crop_to_content(path):
+    img = Image.open(path)
+    if img.mode != "RGBA":
+        img = img.convert("RGBA")
+    bbox = img.getbbox()
+    if bbox:
+        img = img.crop(bbox)
+        img.save(path)
 
 if __name__ == "__main__":
     import_questions("problems.json")
