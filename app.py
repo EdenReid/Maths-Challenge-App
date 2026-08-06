@@ -16,13 +16,38 @@ def main(page: ft.Page):
         async def go_to_about(e):
             await page.push_route("/about")
 
+        problems = db.get_all_probs_with_progress()
+
+        table = ft.DataTable(
+            columns=[ft.DataColumn(ft.Text("Source")),
+                     ft.DataColumn(ft.Text("Difficulty")),
+                     ft.DataColumn(ft.Text("Solved")),
+                     ft.DataColumn(ft.Text("Attempts")),
+            ],
+            rows=[
+                ft.DataRow(
+                    cells=[
+                        ft.DataCell(ft.Text(p["source"])),
+                        ft.DataCell(ft.Text(str(p["difficulty"]))),
+                        ft.DataCell(ft.Text("Yes" if p["solved"] else "No")),
+                        ft.DataCell(ft.Text(str(p["attempts"])))
+                    ]
+                )
+                for p in problems
+            ],
+            column_spacing=20
+        )
+
+        table_column = ft.Column([table], scroll=ft.ScrollMode.AUTO, expand=True)
+
         return ft.View(
             route="/",
             controls=[
-                ft.Text("Home screen"),
+                ft.Container(content=ft.Text("Problem Set", size=24), alignment=ft.Alignment.CENTER),
                 ft.ElevatedButton("Try a random problem", on_click=go_to_problem),
-                ft.ElevatedButton("About", on_click=go_to_about)
-            ]
+                ft.ElevatedButton("About", on_click=go_to_about),
+                table_column
+                ]
         )
 
     def build_problem_view():
