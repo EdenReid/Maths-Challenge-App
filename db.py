@@ -96,3 +96,33 @@ def get_all_probs_with_progress(source=None, difficulty=None, solved=None):
     rows = conn.execute(query, params).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def get_total_problems():
+    conn = get_connection()
+    probs = conn.execute("SELECT * FROM problems").fetchall()
+    conn.close()
+    return len(probs)
+
+def get_total_solved():
+    conn = get_connection()
+    probs = conn.execute("""
+        SELECT * FROM problem_progress WHERE solved = 1
+    """).fetchall()
+    conn.close()
+    return len(probs)
+
+def get_first_attempt_correct():
+    conn = get_connection()
+    probs = conn.execute("SELECT * FROM problem_progress WHERE first_attempt_correct = 1").fetchall()
+    conn.close()
+    return len(probs)
+
+def get_total_xp():
+    conn = get_connection()
+    row = conn.execute("""
+        SELECT SUM(problems.difficulty) as total_xp
+        FROM problems, problem_progress
+        WHERE problems.id = problem_progress.problem_id AND problem_progress.first_attempt_correct = 1
+    """).fetchone()
+    return row["total_xp"] if row["total_xp"] is not None else 0
+

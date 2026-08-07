@@ -25,6 +25,9 @@ def main(page: ft.Page):
         async def go_to_about(e):
             await page.push_route("/about")
 
+        async def go_to_stats(e):
+            await page.push_route("/stats")
+
         def build_rows(problems):
             return [
                 ft.DataRow(
@@ -102,12 +105,14 @@ def main(page: ft.Page):
             controls=[
                 ft.Container(content=ft.Text("Problem Set", size=24), alignment=ft.Alignment.CENTER),
                 ft.ElevatedButton("About", on_click=go_to_about),
+                ft.ElevatedButton("User stats", on_click=go_to_stats),
                 ft.ElevatedButton("Try a random problem", on_click=go_to_problem),
                 source_dropdown,
                 difficulty_dropdown,
                 solved_dropdown,
                 table_column
-                ]
+                ],
+            spacing=15
         )
 
     def build_problem_view(problem=None):
@@ -191,7 +196,6 @@ def main(page: ft.Page):
             controls=[main_column]
         )
 
-
     def build_about_view():
         async def go_home(e):
             await page.push_route("/")
@@ -199,8 +203,33 @@ def main(page: ft.Page):
         return ft.View(
             route="/about",
             controls=[
-                ft.Text("Welcome to Problem Set!\n\nThis is a small app built to help with preparation for the TMUA and other multiple choice mathematical admissions tests.\n\nA few notes:\n- Questions are ranked by difficulty on a scale of 1 (easiest) - 3 (hardest). Allow a level of subjectivity in these rankings.\n- The number of points awarded for correct completion of a problem is equal to the difficulty of the problem.\n- Points are only awarded on the first attempt of a problem.\n- User stats can be seen at any point via the button on the top right of the screen.\n- To start attempting problems, either select a specific problem from the table on the Home page or try a random problem.\n\nGood luck and, most importantly, enjoy your maths!\n"),
+                ft.Text("Welcome to Problem Set!\n\nThis is a small app built to help with preparation for the TMUA and other multiple choice mathematical admissions tests.\n\nA few notes:\n- Questions are ranked by difficulty on a scale of 1 (easiest) - 3 (hardest). Allow a level of subjectivity in these rankings.\n- The ampunt of XP awarded for the correct completion of a problem is equal to the difficulty of the problem.\n- Points are only awarded on the first attempt of a problem.\n- To start attempting problems, either select a specific problem from the table on the Home page or try a random problem.\n\nGood luck and, most importantly, enjoy your maths!\n"),
                 ft.ElevatedButton("Home",on_click=go_home)
+            ]
+        )
+
+    def build_stats_view():
+        async def go_home(e):
+            await page.push_route("/")
+
+        total = db.get_total_problems()
+        solved = db.get_total_solved()
+        percent_solved = round((solved/total)*100) if total > 0 else 0
+        first_attempt_correct = db.get_first_attempt_correct()
+        percent_first_attempt_correct = round((first_attempt_correct/solved)*100) if solved > 0 else 0 
+        xp = db.get_total_xp()
+
+        return ft.View(
+            route="/stats",
+            controls=[
+                ft.ElevatedButton("Exit", on_click=go_home),
+                ft.Row(
+                    [ft.Text("User stats", size=30)],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                ft.Text(f"Total problems solved: {solved}/{total} ({percent_solved}%)"),
+                ft.Text(f"First attempt accuracy: {percent_first_attempt_correct}%"),
+                ft.Text(f"Total XP: {xp}"),
             ]
         )
 
@@ -214,7 +243,10 @@ def main(page: ft.Page):
             selected_problem = None
         if page.route == "/about":
             page.views.append(build_about_view())
+        if page.route == "/stats":
+            page.views.append(build_stats_view())
         page.update()
+
 
     page.on_route_change = route_change
     route_change(None)
