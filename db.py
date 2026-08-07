@@ -79,9 +79,13 @@ def check_solution(problem_id, student_answer):
 def get_all_probs_with_progress():
     conn = get_connection()
     rows = conn.execute("""
-        SELECT problems.id, problems.source, problems.difficulty, problem_progress.solved, problem_progress.attempts 
+        SELECT problems.*, problem_progress.solved, problem_progress.attempts 
         FROM problems, problem_progress
         WHERE problems.id = problem_progress.problem_id
     """).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def get_problem_by_id(problem_id):
+    conn = get_connection()
+    
