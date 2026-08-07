@@ -76,16 +76,23 @@ def check_solution(problem_id, student_answer):
     conn.close()
     return answer == student_answer 
 
-def get_all_probs_with_progress():
+def get_all_probs_with_progress(source=None, difficulty=None, solved=None):
     conn = get_connection()
-    rows = conn.execute("""
+    query = """
         SELECT problems.*, problem_progress.solved, problem_progress.attempts 
         FROM problems, problem_progress
         WHERE problems.id = problem_progress.problem_id
-    """).fetchall()
+    """
+    params = []
+    if source is not None:
+        query += "AND problems.source = ?"
+        params.append(source)
+    if difficulty is not None:
+        query += "AND problems.difficulty = ?"
+        params.append(difficulty)
+    if solved is not None:
+        query += "AND problem_progress.solved = ?"
+        params.append(solved)
+    rows = conn.execute(query, params).fetchall()
     conn.close()
     return [dict(r) for r in rows]
-
-def get_problem_by_id(problem_id):
-    conn = get_connection()
-    

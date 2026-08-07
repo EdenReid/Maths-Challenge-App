@@ -25,15 +25,8 @@ def main(page: ft.Page):
         async def go_to_about(e):
             await page.push_route("/about")
 
-        problems = db.get_all_probs_with_progress()
-
-        table = ft.DataTable(
-            columns=[ft.DataColumn(ft.Text("Source")),
-                     ft.DataColumn(ft.Text("Difficulty")),
-                     ft.DataColumn(ft.Text("Solved")),
-                     ft.DataColumn(ft.Text("Attempts")),
-            ],
-            rows=[
+        def build_rows(problems):
+            return [
                 ft.DataRow(
                     cells=[
                         ft.DataCell(ft.Text(p["source"])),
@@ -44,7 +37,61 @@ def main(page: ft.Page):
                     on_select_change=lambda e, prob=p: page.run_task(go_to_specific_problem, e, prob)
                 )
                 for p in problems
+            ]
+
+        def refresh_table(e):
+            source = None if source_dropdown.value == "all" else source_dropdown.value 
+            difficulty = None if difficulty_dropdown.value == "all" else difficulty_dropdown.value
+            solved = None if solved_dropdown.value == "all" else solved_dropdown.value
+            problems = db.get_all_probs_with_progress(source, difficulty, solved)
+            table.rows = build_rows(problems)
+            page.update()
+
+        initial_problems = db.get_all_probs_with_progress()
+
+        source_dropdown = ft.Dropdown(
+            label="Source",
+            options=[
+                ft.dropdown.Option(key="all", text="All"),
+                ft.dropdown.Option(key="TMUA Paper 1", text="TMUA Paper 1"),
+                ft.dropdown.Option(key="TMUA Paper 2", text="TMUA Paper 2"),
+                ft.dropdown.Option(key="MAT", text="MAT"),
+                ft.dropdown.Option(key="SMC", text="SMC"),
             ],
+            value="all",
+            on_select=refresh_table
+        )
+
+        difficulty_dropdown = ft.Dropdown(
+            label="Difficulty",
+            options=[
+                ft.dropdown.Option(key="all", text="All"),
+                ft.dropdown.Option(key="1", text="1"),
+                ft.dropdown.Option(key="2", text="2"),
+                ft.dropdown.Option(key="3", text="3")
+            ],
+            value="all",
+            on_select=refresh_table
+        )
+
+        solved_dropdown = ft.Dropdown(
+            label="Solved",
+            options=[
+                ft.dropdown.Option(key="all", text="All"),
+                ft.dropdown.Option(key=1, text="Yes"),
+                ft.dropdown.Option(key=0, text="No"),
+            ],
+            value="all",
+            on_select=refresh_table
+        )
+
+        table = ft.DataTable(
+            columns=[ft.DataColumn(ft.Text("Source")),
+                     ft.DataColumn(ft.Text("Difficulty")),
+                     ft.DataColumn(ft.Text("Solved")),
+                     ft.DataColumn(ft.Text("Attempts")),
+            ],
+            rows=build_rows(initial_problems),
             column_spacing=20
         )
 
@@ -54,8 +101,11 @@ def main(page: ft.Page):
             route="/",
             controls=[
                 ft.Container(content=ft.Text("Problem Set", size=24), alignment=ft.Alignment.CENTER),
-                ft.ElevatedButton("Try a random problem", on_click=go_to_problem),
                 ft.ElevatedButton("About", on_click=go_to_about),
+                ft.ElevatedButton("Try a random problem", on_click=go_to_problem),
+                source_dropdown,
+                difficulty_dropdown,
+                solved_dropdown,
                 table_column
                 ]
         )
@@ -81,7 +131,8 @@ def main(page: ft.Page):
         star = ft.Icon(ft.Icons.STAR, color=ft.Colors.WHITE, size=20)
         result_text = ft.Text(size=15)
         main_column = ft.Column(scroll=ft.ScrollMode.AUTO, expand=True, spacing=20, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
-        main_column_contents = []
+        home_button = ft.ElevatedButton("Exit",on_click=go_home)
+        main_column_contents = [home_button]
         statement_image = ft.Image(src="", width = 300, fit = ft.BoxFit.CONTAIN)
 
         def check_answer(selected_option_id):
@@ -148,7 +199,7 @@ def main(page: ft.Page):
         return ft.View(
             route="/about",
             controls=[
-                ft.Text("About"),
+                ft.Text("Welcome to Problem Set!\n\nThis is a small app built to help with preparation for the TMUA and other multiple choice mathematical admissions tests.\n\nA few notes:\n- Questions are ranked by difficulty on a scale of 1 (easiest) - 3 (hardest). Allow a level of subjectivity in these rankings.\n- The number of points awarded for correct completion of a problem is equal to the difficulty of the problem.\n- Points are only awarded on the first attempt of a problem.\n- User stats can be seen at any point via the button on the top right of the screen.\n- To start attempting problems, either select a specific problem from the table on the Home page or try a random problem.\n\nGood luck and, most importantly, enjoy your maths!\n"),
                 ft.ElevatedButton("Home",on_click=go_home)
             ]
         )
