@@ -9,10 +9,37 @@ def main(page: ft.Page):
     page.window.width = 390
     page.window.height = 844
 
+    user_id = None 
     selected_problem = None
+
+    async def load_user_and_start():
+        nonlocal user_id
+        user_id = await page.shared_preferences.get("username")
+        route_change(None)
+
+    def build_login_view():
+        name_field = ft.TextField(label="Username")
+
+        async def submit_name(e):
+            nonlocal user_id 
+
+            if name_field.value:
+                user_id = name_field.value
+                await page.shared_preferences.set("username", user_id)
+                route_change(None)
+
+        return ft.View(
+            route="/login",
+            controls=[
+                ft.Text("Enter a username:"),
+                name_field,
+                ft.ElevatedButton("Continue", on_click=submit_name)
+            ]
+        )
 
     def build_home_view():
         nonlocal selected_problem
+        nonlocal user_id
 
         async def go_to_problem(e):
             await page.push_route("/problem")
@@ -46,11 +73,11 @@ def main(page: ft.Page):
             source = None if source_dropdown.value == "all" else source_dropdown.value 
             difficulty = None if difficulty_dropdown.value == "all" else difficulty_dropdown.value
             solved = None if solved_dropdown.value == "all" else solved_dropdown.value
-            problems = db.get_all_probs_with_progress(source, difficulty, solved)
+            problems = db.get_all_probs_with_progress(user_id, source, difficulty, solved)
             table.rows = build_rows(problems)
             page.update()
 
-        initial_problems = db.get_all_probs_with_progress()
+        initial_problems = db.get_all_probs_with_progress(user_id)
 
         source_dropdown = ft.Dropdown(
             label="Source",
@@ -117,7 +144,7 @@ def main(page: ft.Page):
 
     def build_problem_view(problem=None):
         if problem is None:
-            problem = db.get_random_unsolved_problem()
+            problem = db.get_random_unsolved_problem(user_id)
 
         async def go_home(e):
             await page.push_route("/")
@@ -141,13 +168,19 @@ def main(page: ft.Page):
         statement_image = ft.Image(src="", width = 300, fit = ft.BoxFit.CONTAIN)
 
         def check_answer(selected_option_id):
-            is_correct = db.check_solution(problem["id"],selected_option_id)
-            if is_correct:
-                result_text.value = "Correct"
+            is_correct = db.check_solution(problem["id"], user_id, selected_option_id)
+            if is_correct and db.is_first_attempt(problem["id"], user_id):
+                points = problem["difficulty"]
+                result_text.value = f"Correct! +{points} XP"
                 result_text.color = ft.Colors.GREEN 
+            elif is_correct:
+                result_text.value = "Correct! No XP as this was a reattempt."
+                result_text.color = ft.Colors.GREEN
             else:
                 result_text.value = "Wrong. Try again."
                 result_text.color = ft.Colors.RED 
+
+            page.update()
 
         def next_problem():
             page.views[-1] = build_problem_view()
@@ -213,18 +246,18 @@ def main(page: ft.Page):
             await page.push_route("/")
 
         total = db.get_total_problems()
-        solved = db.get_total_solved()
+        solved = db.get_total_solved(user_id)
         percent_solved = round((solved/total)*100) if total > 0 else 0
-        first_attempt_correct = db.get_first_attempt_correct()
+        first_attempt_correct = db.num_first_attempt_correct(user_id)
         percent_first_attempt_correct = round((first_attempt_correct/solved)*100) if solved > 0 else 0 
-        xp = db.get_total_xp()
+        xp = db.get_total_xp(user_id)
 
         return ft.View(
             route="/stats",
             controls=[
                 ft.ElevatedButton("Exit", on_click=go_home),
                 ft.Row(
-                    [ft.Text("User stats", size=30)],
+                    [ft.Text(f"User stats for {user_id}", size=30)],
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
                 ft.Text(f"Total problems solved: {solved}/{total} ({percent_solved}%)"),
@@ -237,18 +270,22 @@ def main(page: ft.Page):
         nonlocal selected_problem
 
         page.views.clear()
-        page.views.append(build_home_view())
-        if page.route == "/problem":
-            page.views.append(build_problem_view(selected_problem))
-            selected_problem = None
-        if page.route == "/about":
-            page.views.append(build_about_view())
-        if page.route == "/stats":
-            page.views.append(build_stats_view())
+
+        if user_id is None:
+            page.views.append(build_login_view())
+        else:
+            page.views.append(build_home_view())
+            if page.route == "/problem":
+                page.views.append(build_problem_view(selected_problem))
+                selected_problem = None
+            if page.route == "/about":
+                page.views.append(build_about_view())
+            if page.route == "/stats":
+                page.views.append(build_stats_view())
         page.update()
 
 
     page.on_route_change = route_change
-    route_change(None)
+    page.run_task(load_user_and_start)
 
 ft.run(main)

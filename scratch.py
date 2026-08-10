@@ -1,5 +1,8 @@
 import sqlite3
 import db 
 
-print(db.get_total_problems())
-print(db.get_total_solved())
+conn = db.get_connection()
+
+conn.execute("UPDATE problems SET source = 'TMUA Paper 1' WHERE source = 'TMUA'")
+conn.commit()
+conn.close()

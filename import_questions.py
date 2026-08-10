@@ -41,10 +41,6 @@ def import_questions(json_path):
                     opt["image_path"] = opt_image_path
             conn.execute("UPDATE problems SET options = ? WHERE id = ?", (json.dumps(options), problem_id))
         
-        conn.execute("""
-            INSERT OR IGNORE INTO problem_progress (problem_id, solved, attempts) VALUES (?,0,0)
-        """, (problem_id,))
-
     conn.commit()
     conn.close()
 
