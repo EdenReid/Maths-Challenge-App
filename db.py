@@ -104,18 +104,18 @@ def get_all_probs_with_progress(user_id, source=None, difficulty=None, solved=No
         FROM problems
         LEFT JOIN problem_progress
             ON problems.id = problem_progress.problem_id AND problem_progress.user_id = ?
-        WHERE 1=1
+        WHERE 1=1 
     """
     params = [user_id]
     if source is not None:
-        query += "AND problems.source = ?"
+        query += "AND problems.source = ? "
         params.append(source)
     if difficulty is not None:
-        query += "AND problems.difficulty = ?"
+        query += "AND problems.difficulty = ? "
         params.append(difficulty)
     if solved is not None:
         if solved == 0:
-            query += "AND (problem_progress.solved = ? OR problem_progress.solved IS NULL)"
+            query += "AND (problem_progress.solved = ? OR problem_progress.solved IS NULL) "
         else:
             query += "AND problem_progress.solved = ?"   
         params.append(solved)

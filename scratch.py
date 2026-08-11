@@ -1,8 +1,13 @@
-import sqlite3
-import db 
+import os
+from dotenv import load_dotenv
+import psycopg
 
-conn = db.get_connection()
+load_dotenv()
 
-conn.execute("UPDATE problems SET source = 'TMUA Paper 1' WHERE source = 'TMUA'")
-conn.commit()
+conn = psycopg.connect(os.environ["DATABASE_URL"])
+print("Connected!")
+
+cur = conn.execute("SELECT * FROM problems")
+print(cur.fetchall())
+
 conn.close()
