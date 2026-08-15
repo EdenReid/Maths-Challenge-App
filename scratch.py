@@ -1,13 +1,5 @@
-import os
-from dotenv import load_dotenv
-import psycopg
-
-load_dotenv()
-
-conn = psycopg.connect(os.environ["DATABASE_URL"])
-print("Connected!")
-
-cur = conn.execute("SELECT * FROM problems")
-print(cur.fetchall())
-
+import db
+conn = db.get_connection()
+row = conn.execute("SELECT * FROM problems").fetchall()
+print(row)
 conn.close()

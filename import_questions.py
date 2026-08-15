@@ -16,8 +16,12 @@ def import_questions(json_path):
     conn = get_connection()
 
     for q in questions:
-        conn.execute("INSERT OR IGNORE INTO problems (source, difficulty, statement, image_path, options, answer) VALUES (?,?,?,?,?,?)", (q["source"], q["difficulty"], q["statement"], q["image_path"], json.dumps(q["options"]), q["answer"]))
-        row = conn.execute("SELECT id FROM problems WHERE statement = ?", (q["statement"],)).fetchone()
+        conn.execute("""
+            INSERT INTO problems (source, difficulty, statement, image_path, options, answer)
+            VALUES (%s,%s,%s,%s,%s,%s)
+            ON CONFLICT (statement) DO NOTHING
+        """, (q["source"], q["difficulty"], q["statement"], q["image_path"], json.dumps(q["options"]), q["answer"]))
+        row = conn.execute("SELECT id FROM problems WHERE statement = %s", (q["statement"],)).fetchone()
         problem_id = row["id"]
 
         statement_image_path = os.path.join("images", f"q{problem_id}_statement.png")
@@ -26,8 +30,8 @@ def import_questions(json_path):
             render_text_to_image(q["statement"], statement_image_path)
         conn.execute("""
             UPDATE problems
-            SET statement_image = ?
-            WHERE id = ?
+            SET statement_image = %s
+            WHERE id = %s
         """, (statement_image_path, problem_id,)
         )
 
@@ -39,7 +43,7 @@ def import_questions(json_path):
                     if not os.path.exists(opt_image_path):
                         render_option_image(opt["value"], opt_image_path, fontsize=28)
                     opt["image_path"] = opt_image_path
-            conn.execute("UPDATE problems SET options = ? WHERE id = ?", (json.dumps(options), problem_id))
+            conn.execute("UPDATE problems SET options = %s WHERE id = %s", (json.dumps(options), problem_id))
         
     conn.commit()
     conn.close()
